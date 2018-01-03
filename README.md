@@ -1,2 +1,2 @@
 # Luminaudio
-Procedural music generation based on length of day data.
+Procedural music generation based on length of daylight data for a given location.
