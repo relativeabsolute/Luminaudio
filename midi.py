@@ -1,4 +1,18 @@
+import math
+
 class Midi:
+    # note: this will only work for 4-byte values, but that's all midi can store anyway
+    def get_variable_length_bytes(value):
+        byte_count = math.ceil(value.bit_length() / 7)
+        result = 0
+        #print("original value = {}".format(bin(value)))
+        for i in range(byte_count):
+            current_value = (value & (0x7F << (i * 7))) >> (i * 7)
+            #print("byte {} = {:02x}".format(i, current_value))
+            result |= (current_value | ((i > 0) << 7)) << (i * 8)
+            #print("current result value = {:x}".format(result))
+        return result
+
     class HeaderChunk:
         def __init__(self):
             self.chunk_type = 'MThd'
@@ -7,19 +21,19 @@ class Midi:
             self.ntrks = 1 # always 1 for a format 0 file
             self.division = 3 << 8 # not sure about this one
         def write_to_file(self, file_name):
-            with open(file_name, 'wb') as file_object:
-                file_object.write(self.chunk_type.encode())
-                file_object.write(self.length.to_bytes(4, 'big'))
-                file_object.write(self.format.to_bytes(2, 'big'))
-                file_object.write(self.ntrks.to_bytes(2, 'big'))
-                file_object.write(self.division.to_bytes(2, 'big'))
-                file_object.flush()
+            with open(file_name, 'wb') as header_file_writer:
+                header_file_writer.write(self.chunk_type.encode())
+                header_file_writer.write(self.length.to_bytes(4, 'big'))
+                header_file_writer.write(self.format.to_bytes(2, 'big'))
+                header_file_writer.write(self.ntrks.to_bytes(2, 'big'))
+                header_file_writer.write(self.division.to_bytes(2, 'big'))
+                header_file_writer.flush()
     class TrackChunk:
         class Event:
             # blank values to initialize
             def __init__(self):
                 self.delta_time = 0
-                self.event = [0, 0, 0]
+                self.evt_desc = [0, 0, 0]
 
         def __init__(self):
             self.chunk_type = 'MTrk'
@@ -30,15 +44,16 @@ class Midi:
             evt = self.Event()
             evt.delta_time = dt
             # TODO: ensure note_num and key_velocity are 7 bits each
-            evt.event = [((8 | note_on_off) << 4) | channel_num, note_num, key_velocity]
+            evt.evt_desc = [((0b1000 | note_on_off) << 4) | channel_num, note_num, key_velocity]
             self.events.append(evt)
     
         def write_to_file(self, file_name):
-            with open(file_name, 'ab') as file_object:
-                file_object.write(self.chunk_type.encode())
-                file_object.write(self.length.to_bytes(4, 'big'))
+            with open(file_name, 'ab') as track_file_writer:
+                track_file_writer.write(self.chunk_type.encode())
+                track_file_writer.write(self.length.to_bytes(4, 'big'))
                 for evt in self.events:
                     # TODO: figure out writing variable length quantities (which a delta time is)
+                    pass
 
     def __init__(self):
         self.chunks = [self.HeaderChunk()]
