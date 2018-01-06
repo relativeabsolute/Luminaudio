@@ -2,7 +2,7 @@ import math
 
 class Midi:
     # note: this will only work for 4-byte values, but that's all midi can store anyway
-    def get_variable_length_bytes(value):
+    def get_var_length_qty(value):
         byte_count = math.ceil(value.bit_length() / 7)
         result = 0
         #print("original value = {}".format(bin(value)))
@@ -12,6 +12,10 @@ class Midi:
             result |= (current_value | ((i > 0) << 7)) << (i * 8)
             #print("current result value = {:x}".format(result))
         return result
+
+    # return the number of bytes in a variable length quantity
+    def length_of_var_length_qty(value):
+        return math.ceil(value.bit_length() / 8)
 
     class HeaderChunk:
         def __init__(self):
@@ -37,6 +41,7 @@ class Midi:
 
         def __init__(self):
             self.chunk_type = 'MTrk'
+            # TODO: update length of chunk with events
             self.length = 0
             self.events = []
 
@@ -51,9 +56,15 @@ class Midi:
             with open(file_name, 'ab') as track_file_writer:
                 track_file_writer.write(self.chunk_type.encode())
                 track_file_writer.write(self.length.to_bytes(4, 'big'))
+                prev_status = 0
                 for evt in self.events:
-                    # TODO: figure out writing variable length quantities (which a delta time is)
-                    pass
+                    dt = Midi.get_var_length_qty(evt.delta_time)
+                    track_file_writer.write(dt.to_bytes(Midi.length_of_var_length_qty(dt), 'big'))
+                    start_index = 0
+                    if evt.evt_desc[0] == prev_status:
+                        start_index = 1
+                    track_file_writer.write(bytes(evt.evt_desc[start_index:]))
+                track_file_writer.flush()
 
     def __init__(self):
         self.chunks = [self.HeaderChunk()]
