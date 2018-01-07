@@ -42,7 +42,6 @@ class Midi:
         def __init__(self, ticks_per_qtr_note):
             self.ticks_per_qtr_note = ticks_per_qtr_note
             self.chunk_type = 'MTrk'
-            # TODO: update length of chunk with events
             self.length = 0
             self.events = []
 
