@@ -1,7 +1,8 @@
-
+from debug import debug_print
 import random
 
-# gene encoding: first bit represents positive change (increase) or negative change (decrease), next bits represent change in number of semitones
+# gene encoding: first bit represents positive change (increase) or negative change (decrease)
+# next bits represent change in number of semitones
 GENE_BIT_COUNT = 9
 
 def initial_population(num):
@@ -53,10 +54,10 @@ def selection(population):
     # TODO: allow different starting notes
     fitnesses = [fitness(x, 60) for x in population]
     mean_fitness = sum(fitnesses) / len(fitnesses)
-    print("Fitnesses:")
-    print('\t{}'.format(str(fitnesses)))
-    print("Mean fitness:")
-    print('\t{}'.format(mean_fitness))
+    debug_print("Fitnesses:")
+    debug_print('\t{}'.format(str(fitnesses)))
+    debug_print("Mean fitness:")
+    debug_print('\t{}'.format(mean_fitness))
     selected_population = []
     for i in range(len(population)):
         proportion = fitnesses[i] // mean_fitness
@@ -91,7 +92,7 @@ def mutate(population, percentage):
         result.append(x ^ mutations)
     return result
 
-def run(num_initial_population, num_iterations, crossover_percentage = 0.5, mutation_percentage = 0.01):
+def run(num_initial_population, num_iterations, crossover_percentage, mutation_percentage):
     pop = initial_population(num_initial_population)
     for i in range(num_iterations):
         selected_pop = selection(pop)
