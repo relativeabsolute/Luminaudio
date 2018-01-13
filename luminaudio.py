@@ -28,24 +28,25 @@ def main():
     # initial_population = final_count * (cross_over_percent ** -num_iterations)
     initial_population = int(num_notes * (options['crossover'] ** -options['iterations']))
     debug_print("Calculated initial population: {}".format(initial_population))
+    start_note = options.get('start_note', 60)
+    debug_print("Start note: {}".format(start_note))
     result_sequence = genetic.run(initial_population, options['iterations'],
-        options['crossover'], options['mutation'])
-    current_note = options.get('start_note', 60)
+        options['crossover'], options['mutation'], start_note, options['scale'])
     sixteenth_note = ticks_per_quarter // 4
-    trk_chk.add_event(1, 0, current_note, 96, 0)
-    trk_chk.add_event(0, 0, current_note, 0, sixteenth_note)
+    trk_chk.add_event(1, 0, start_note, 96, 0)
+    trk_chk.add_event(0, 0, start_note, 0, sixteenth_note)
     for item in result_sequence:
-        new_note = get_new_note(current_note, item)
-        debug_print('current_note = {}, new_note = {}'.format(current_note, new_note))
+        new_note = get_new_note(start_note, item)
+        debug_print('start_note = {}, new_note = {}'.format(start_note, new_note))
         trk_chk.add_event(1, 0, new_note, 96, 0)
         trk_chk.add_event(0, 0, new_note, 0, sixteenth_note)
     example.chunks.append(trk_chk)
     example.write_to_file(options['output'])
     
 
-def get_new_note(current_note, encoded_change):
+def get_new_note(start_note, encoded_change):
     sign = encoded_change & (0x100) > 0
-    return current_note + (encoded_change & 0xFF) * sign
+    return start_note + (encoded_change & 0xFF) * sign
 
 if __name__ == "__main__":
     main()

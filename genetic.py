@@ -16,10 +16,10 @@ def initial_population(num):
         result.append((sign << 8) | int(shift))
     return result
 
-def fitness(gene, cur_note):
+def fitness(gene, start_note, scale):
     direction = 1 - 2 * ((gene & 0x100) >> 8)
     note_change_val = gene & 0xFF
-    dest_note = cur_note + note_change_val * direction
+    dest_note = start_note + note_change_val * direction
     result = 0
     if dest_note < 0 or dest_note > 127:
         result = 0
@@ -40,19 +40,18 @@ def fitness(gene, cur_note):
         elif num_octaves > 3:
             result -= 0.75
         base_interval = note_change_val - num_octaves * 12
-        if base_interval == 12 or base_interval == 5 or base_interval == 7:
-            result += 0.5
-        elif base_interval == 2 or base_interval == 4 or base_interval == 9 or base_interval == 11:
-            result += 0.4
-        elif base_interval == 1 or base_interval == 3 or base_interval == 8 or base_interval == 10:
-            result += 0.2
+        if not (base_interval in scale):
+            result -= 0.25
+        else:
+            # TODO: favor certain interval types depending on the previous interval(s)
+            result += 0.25
     return result
 
-def selection(population):
+def selection(population, start_note, scale):
     if not population:
         return []
     # TODO: allow different starting notes
-    fitnesses = [fitness(x, 60) for x in population]
+    fitnesses = [fitness(x, start_note, scale) for x in population]
     mean_fitness = sum(fitnesses) / len(fitnesses)
     debug_print("Fitnesses:")
     debug_print('\t{}'.format(str(fitnesses)))
@@ -92,10 +91,11 @@ def mutate(population, percentage):
         result.append(x ^ mutations)
     return result
 
-def run(num_initial_population, num_iterations, crossover_percentage, mutation_percentage):
+def run(num_initial_population, num_iterations, crossover_percentage,
+    mutation_percentage, start_note, scale):
     pop = initial_population(num_initial_population)
     for i in range(num_iterations):
-        selected_pop = selection(pop)
+        selected_pop = selection(pop, start_note, scale)
         next_gen = crossover(selected_pop, crossover_percentage)
         pop = mutate(next_gen, mutation_percentage)
         print('[', end='')
