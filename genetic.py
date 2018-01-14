@@ -16,7 +16,7 @@ def initial_population(num):
         result.append((sign << 8) | int(shift))
     return result
 
-def fitness(gene, start_note, scale):
+def fitness(gene, start_note, scale, favor_array, favor_gain):
     direction = 1 - 2 * ((gene & 0x100) >> 8)
     note_change_val = gene & 0xFF
     dest_note = start_note + note_change_val * direction
@@ -41,17 +41,16 @@ def fitness(gene, start_note, scale):
             result -= 0.75
         base_interval = note_change_val - num_octaves * 12
         if not (base_interval in scale):
-            result -= 0.25
+            result -= 2 * favor_gain
         else:
-            # TODO: favor certain interval types depending on the previous interval(s)
-            result += 0.25
+            result += favor_array[scale.index(base_interval)] * favor_gain
     return result
 
-def selection(population, start_note, scale):
+def selection(population, start_note, scale, favor_array, favor_gain):
     if not population:
         return []
     # TODO: allow different starting notes
-    fitnesses = [fitness(x, start_note, scale) for x in population]
+    fitnesses = [fitness(x, start_note, scale, favor_array, favor_gain) for x in population]
     mean_fitness = sum(fitnesses) / len(fitnesses)
     debug_print("Fitnesses:")
     debug_print('\t{}'.format(str(fitnesses)))
@@ -91,17 +90,27 @@ def mutate(population, percentage):
         result.append(x ^ mutations)
     return result
 
-def run(num_initial_population, num_iterations, crossover_percentage,
-    mutation_percentage, start_note, scale):
+def run(options):
+    num_measures = int(options.get('num_measures', 4))
+    num_notes = num_measures * 16
+    num_iterations = int(options.get('iterations', 4))
+    crossover_percentage = options.get('crossover', 0.5)
+    mutation_percentage = options.get('mutation', 0.01)
+    start_note = int(options.get('start_note', 60))
+    scale = options['scale']
+    num_initial_population = int(num_notes * (options['crossover'] ** -options['iterations']))
+    debug_print("Calculated initial population: {}".format(num_initial_population))
     pop = initial_population(num_initial_population)
+    favor_array = options.get('favor_array', [1, 1, 1.5, 1, 2, 1, 1])
+    favor_gain = options.get('favor_gain', 0.25)
     for i in range(num_iterations):
-        selected_pop = selection(pop, start_note, scale)
+        selected_pop = selection(pop, start_note, scale, favor_array, favor_gain)
         next_gen = crossover(selected_pop, crossover_percentage)
         pop = mutate(next_gen, mutation_percentage)
-        print('[', end='')
+        debug_print('[')
         for item in pop:
-            print(format(item, '#011b'), end=',')
-        print(']')
-        if len(pop) <= 4:
+            debug_print(format(item, '#011b'))
+        debug_print(']')
+        if len(pop) <= num_notes:
             break
     return pop

@@ -26,12 +26,11 @@ def main():
     # fix num_iterations since solving for an exponent is harder
     # final_count / initial_population = cross_over_percent ** num_iterations
     # initial_population = final_count * (cross_over_percent ** -num_iterations)
-    initial_population = int(num_notes * (options['crossover'] ** -options['iterations']))
-    debug_print("Calculated initial population: {}".format(initial_population))
+    
+    
     start_note = options.get('start_note', 60)
     debug_print("Start note: {}".format(start_note))
-    result_sequence = genetic.run(initial_population, options['iterations'],
-        options['crossover'], options['mutation'], start_note, options['scale'])
+    result_sequence = genetic.run(options)
     sixteenth_note = ticks_per_quarter // 4
     trk_chk.add_event(1, 0, start_note, 96, 0)
     trk_chk.add_event(0, 0, start_note, 0, sixteenth_note)
