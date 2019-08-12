@@ -1,4 +1,3 @@
-import handle_options
 import requests
 import genetic
 import midi
