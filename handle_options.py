@@ -35,6 +35,7 @@ def parse_args():
     #        options['owmkey'] = content.strip()
     return options
 
+
 def read_options_file(file_name):
     result = {}
     if file_name:
@@ -43,6 +44,7 @@ def read_options_file(file_name):
                 split = line.strip().split('=')
                 result[split[0]] = float(split[1])
     return result
+
 
 # ticks_per_quarter (default = 960)
 # num_measures (default = 4)
@@ -54,6 +56,7 @@ def get_midi_options(midi_config_file):
             for line in f:
                 split = line.strip().split('=')
     return result
+
 
 # note: scale is number of semitones away from the *root* note
 # TODO: figure out in terms of previous note instead of root note

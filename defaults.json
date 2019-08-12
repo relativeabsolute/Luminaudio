@@ -1,0 +1,17 @@
+{
+	"genetic": {
+		"iterations": 10,
+		"population": 20,
+		"crossover": 0.5,
+		"mutation": 0.01
+	},
+	"midi": {
+		"ticks_per_quarter": 960,
+		"measures": 4,
+		"scale": [0, 2, 4, 5, 7, 9, 11],
+		"output": "output.mid"
+	},
+	"system": {
+		"debug": false
+	}
+}

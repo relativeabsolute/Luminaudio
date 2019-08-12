@@ -5,6 +5,7 @@ import random
 # next bits represent change in number of semitones
 GENE_BIT_COUNT = 9
 
+
 def initial_population(num):
     result = []
     random.seed()
@@ -15,6 +16,7 @@ def initial_population(num):
             shift -= 48
         result.append((sign << 8) | int(shift))
     return result
+
 
 def fitness(gene, start_note, scale, favor_array, favor_gain):
     direction = 1 - 2 * ((gene & 0x100) >> 8)
@@ -46,6 +48,7 @@ def fitness(gene, start_note, scale, favor_array, favor_gain):
             result += favor_array[scale.index(base_interval)] * favor_gain
     return result
 
+
 def selection(population, start_note, scale, favor_array, favor_gain):
     if not population:
         return []
@@ -66,6 +69,7 @@ def selection(population, start_note, scale, favor_array, favor_gain):
         selected_population.append(random.choice(population))
     return selected_population
 
+
 def crossover(population, percentage):
     mates = [x for x in population if random.random() < percentage]
     result = []
@@ -81,6 +85,7 @@ def crossover(population, percentage):
         result.append(second)
     return result
 
+
 def mutate(population, percentage):
     result = []
     for x in population:
@@ -90,19 +95,21 @@ def mutate(population, percentage):
         result.append(x ^ mutations)
     return result
 
+
 def run(options):
-    num_measures = int(options.get('num_measures', 4))
+    num_measures = options['midi']['measures']
     num_notes = num_measures * 16
-    num_iterations = int(options.get('iterations', 4))
-    crossover_percentage = options.get('crossover', 0.5)
-    mutation_percentage = options.get('mutation', 0.01)
-    start_note = int(options.get('start_note', 60))
-    scale = options['scale']
-    num_initial_population = int(num_notes * (options['crossover'] ** -options['iterations']))
+    num_iterations = options['genetic']['iterations']
+    crossover_percentage = options['genetic']['crossover']
+    mutation_percentage = options['genetic']['mutation']
+    start_note = 60
+    scale = options['midi']['scale']
+	# TODO: chang ethe way initial population length is calculated
+    num_initial_population = int(num_notes * (options['genetic']['crossover'] ** -options['genetic']['iterations']))
     debug_print("Calculated initial population: {}".format(num_initial_population))
     pop = initial_population(num_initial_population)
-    favor_array = options.get('favor_array', [1, 1, 1.5, 1, 2, 1, 1])
-    favor_gain = options.get('favor_gain', 0.25)
+    favor_array = [1, 1, 1.5, 1, 2, 1, 1]
+    favor_gain = 0.25
     for i in range(num_iterations):
         selected_pop = selection(pop, start_note, scale, favor_array, favor_gain)
         next_gen = crossover(selected_pop, crossover_percentage)
