@@ -1,3 +1,4 @@
+from debug import debug_print
 import math
 
 class Midi:
@@ -18,12 +19,14 @@ class Midi:
         return max(math.ceil(value.bit_length() / 8), 1)
 
     class HeaderChunk:
-        def __init__(self):
+
+        # default to 960 ticks per quarter note
+        def __init__(self, ticks_per_quarter = 960):
             self.chunk_type = 'MThd'
             self.length = 6
             self.format = 0 # single multi-channel track for now
             self.ntrks = 1 # always 1 for a format 0 file
-            self.division = 0x3C0 # default to 960 ticks per quarter note
+            self.division = ticks_per_quarter
         def write_to_file(self, file_name):
             with open(file_name, 'wb') as header_file_writer:
                 header_file_writer.write(self.chunk_type.encode())
@@ -42,7 +45,6 @@ class Midi:
         def __init__(self, ticks_per_qtr_note):
             self.ticks_per_qtr_note = ticks_per_qtr_note
             self.chunk_type = 'MTrk'
-            # TODO: update length of chunk with events
             self.length = 0
             self.events = []
 
@@ -52,7 +54,7 @@ class Midi:
             # TODO: ensure note_num and key_velocity are 7 bits each
             dt_var_len = Midi.get_var_length_qty(dt)
             len_dt_var_len = Midi.length_of_var_length_qty(dt_var_len)
-            print("Event delta time = {:x}, with byte length = {}".format(dt_var_len, len_dt_var_len))
+            debug_print("Event delta time = {:x}, with byte length = {}".format(dt_var_len, len_dt_var_len))
             self.length += Midi.length_of_var_length_qty(Midi.get_var_length_qty(dt))
             evt.evt_desc = [((0b1000 | note_on_off) << 4) | channel_num, note_num, key_velocity]
             evt_len = len(evt.evt_desc)
@@ -66,7 +68,8 @@ class Midi:
         def write_to_file(self, file_name):
             with open(file_name, 'ab') as track_file_writer:
                 # TODO: allow other time sigs than 4/4
-                notes_off_dt = self.ticks_per_qtr_note * 3
+                #notes_off_dt = self.ticks_per_qtr_note * 3
+                notes_off_dt = 0 # end the track when there are no more midi notes
                 notes_off_dt = Midi.get_var_length_qty(notes_off_dt)
                 # +7 is for the data of the notes off event and the track end event
                 self.length += Midi.length_of_var_length_qty(notes_off_dt) + 7
@@ -89,8 +92,8 @@ class Midi:
                 track_file_writer.write(bytes([0x00, 0xFF, 0x2F, 0x00]))
                 track_file_writer.flush()
 
-    def __init__(self):
-        self.chunks = [self.HeaderChunk()]
+    def __init__(self, ticks_per_quarter = 960):
+        self.chunks = [self.HeaderChunk(ticks_per_quarter)]
 
     def write_to_file(self, file_name):
         for chunk in self.chunks:

@@ -99,3 +99,14 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# venv stuff
+bin
+include
+lib
+lib64
+pyvenv.cfg
+
+# luminaudio specific
+*.mid
+config.json
