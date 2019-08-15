@@ -116,13 +116,25 @@ class Measure:
 		return statistics.stdev(map(lambda note: note.note_len, measure.notes))
 
 
+	def note_length_mean(measure):
+		if len(measure.notes) < 1:
+			return 0
+		return statistics.mean(map(lambda note: note.note_len, measure.notes))
+
+
 	def midi_number_stdev(measure):
 		if len(measure.notes) <= 1:
 			return 0
 		return statistics.stdev(map(lambda note: note.midi_num, measure.notes))
 
+	
+	def midi_number_mean(measure):
+		if len(measure.notes) < 1:
+			return 0
+		return statistics.mean(map(lambda note: note.midi_num, measure.notes))
+
 
 	# TODO: include measure for presence of patterns/motifs in the measure
-	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, midi_number_stdev]
-	DEFAULT_TARGETS = [Decimal(0.0625), Decimal(0.125), Decimal(2)]
+	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, midi_number_stdev, note_length_mean, midi_number_mean]
+	DEFAULT_TARGETS = [Decimal(0.0625), Decimal(0.125), Decimal(2), Decimal(0.25), Decimal(60)]
 

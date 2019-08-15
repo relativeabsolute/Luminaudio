@@ -36,11 +36,12 @@ def fitness(gene, measurement_funcs=Measure.DEFAULT_MEASUREMENTS, measurement_ta
 	return result
 
 
-def selection(population):
+def selection(population, options):
 	if not population:
 		return []
 	# TODO: allow different options for the fitness function
-	fitnesses = [fitness(x) for x in population]
+	fitnesses = [fitness(x, measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
+		measurement_weights=list(map(Decimal, options['genetic']['measurement_weights']))) for x in population]
 	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
 	num_selected = len(selected)
 	result = []
@@ -103,7 +104,7 @@ def run(options):
 	for i in range(num_iterations):
 		if len(pop) == 1:
 			break
-		selected_pop = selection(pop)
+		selected_pop = selection(pop, options)
 		next_gen = selected_pop
 		if len(selected_pop) > 1:
 			next_gen = crossover(selected_pop, crossover_percentage)
