@@ -1,9 +1,12 @@
 from decimal import Decimal
 import math
 import random
+import statistics
 
 
 class Note:
+	MIN_MIDI_NOTE = 21
+	MAX_MIDI_NOTE = 108
 	decimal_two = Decimal(2)
 
 
@@ -19,6 +22,14 @@ class Note:
 	def is_valid_length(self):
 		log = self.note_len.log10() / Note.decimal_two.log10()
 		return log <= 0 and math.ceil(log) == math.floor(log)
+
+
+	# calculate the note's length, taking into account if the note is dotted
+	def actual_length(self):
+		multiplier = 1
+		if self.dotted:
+			multiplier = 1.5
+		return self.note_len * multiplier
 
 
 	def __str__(self):
@@ -46,15 +57,12 @@ class Measure:
 		for note in self.notes:
 			if not note.is_valid_length():
 				return False
-			note_length = note.note_len
-			if note.dotted:
-				note_length *= 1.5
-			sum_lengths += note_length
+			sum_lengths += note.actual_length()
 		return sum_lengths == 1
 
 
 	# most basic possible random measure generation
-	def random_measure(rests_chance=0, min_note=21, max_note=108):
+	def random_measure(rests_chance=0, min_note=Note.MIN_MIDI_NOTE, max_note=Note.MAX_MIDI_NOTE):
 		length_left = Decimal(1)
 		max_power = 0
 		min_power = -4 # go down to sixteenth notes for now
@@ -69,3 +77,19 @@ class Measure:
 			is_rest = random.random() < rests_chance
 			result.append(Note(note_num=note_num, note_len=note_length, is_rest=is_rest))
 		return Measure(notes=result)
+
+
+	# calculate the percentage of the measure that are rests
+	def percent_vacant(self):
+		return sum(map(lambda note: note.actual_length(), filter(lambda note: note.is_rest, self.notes)))
+
+
+	def note_length_stdev(self):
+		return statistics.stdev(map(lambda note: note.actual_length(), self.notes))
+
+
+	def midi_number_stdev(self):
+		return statistics.stdev(map(lambda note: note.midi_num, self.notes))
+
+
+	# TODO: include measure for presence of patterns/motifs in the measure
