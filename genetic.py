@@ -41,9 +41,6 @@ def selection(population):
 		return []
 	# TODO: allow different options for the fitness function
 	fitnesses = [fitness(x) for x in population]
-	# min_fitness = min(fitnesses)
-	# fitnesses = list(map(lambda fitness: fitness - min_fitness, fitnesses))
-	# we use truncation selection for now
 	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
 	num_selected = len(selected)
 	result = []
@@ -99,11 +96,9 @@ def mutate(population, percentage):
 
 
 def run(options):
-	# num_measures = options['midi']['measures']
 	num_iterations = options['genetic']['iterations']
 	crossover_percentage = options['genetic']['crossover']
 	mutation_percentage = options['genetic']['mutation']
-	#scale = options['midi']['scale']
 	pop = initial_population(options['genetic']['population'])
 	for i in range(num_iterations):
 		if len(pop) == 1:
