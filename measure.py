@@ -38,8 +38,6 @@ class Note:
 
 
 class Measure:
-
-
 	def __init__(self, notes=[]):
 		self.notes = notes
 
@@ -61,6 +59,17 @@ class Measure:
 		return sum_lengths == 1
 
 
+	def split(self, cutoff_point):
+		running_total = 0
+		current_index = 0
+		while running_total < cutoff_point:
+			running_total += self.notes[current_index].actual_length()
+			current_index += 1
+		if running_total > cutoff_point:
+			current_index -= 1
+		return (self.notes[0: current_index], self.notes[current_index:])
+
+
 	# most basic possible random measure generation
 	def random_measure(rests_chance=0, min_note=Note.MIN_MIDI_NOTE, max_note=Note.MAX_MIDI_NOTE):
 		length_left = Decimal(1)
@@ -79,17 +88,22 @@ class Measure:
 		return Measure(notes=result)
 
 
+	# these measures are defined at the class level rather than instance level
+	# to make it easier to add them to lists of measures for the fitness function
 	# calculate the percentage of the measure that are rests
-	def percent_vacant(self):
-		return sum(map(lambda note: note.actual_length(), filter(lambda note: note.is_rest, self.notes)))
+	def percent_vacant(measure):
+		return sum(map(lambda note: note.actual_length(), filter(lambda note: note.is_rest, measure.notes)))
 
 
-	def note_length_stdev(self):
-		return statistics.stdev(map(lambda note: note.actual_length(), self.notes))
+	def note_length_stdev(measure):
+		return statistics.stdev(map(lambda note: note.actual_length(), measure.notes))
 
 
-	def midi_number_stdev(self):
-		return statistics.stdev(map(lambda note: note.midi_num, self.notes))
+	def midi_number_stdev(measure):
+		return statistics.stdev(map(lambda note: note.midi_num, measure.notes))
 
 
 	# TODO: include measure for presence of patterns/motifs in the measure
+	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, midi_number_stdev]
+	DEFAULT_TARGETS = [0.0625, 0.125, 2]
+

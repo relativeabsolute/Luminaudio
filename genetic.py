@@ -1,64 +1,46 @@
 from debug import debug_print
 import random
-
-# gene encoding: first bit represents positive change (increase) or negative change (decrease)
-# next bits represent change in number of semitones
-GENE_BIT_COUNT = 9
+from measure import Measure
+import math
 
 
-def initial_population(num):
-    result = []
+def initial_population(population_count, num_measures=1):
     random.seed()
-    for _ in range(num):
-        shift = random.gauss(4, 2) * 12
-        sign = shift >= 48
-        if sign:
-            shift -= 48
-        result.append((sign << 8) | int(shift))
+	# population is represented as a list of lists where the inner lists are each a list of measures (which represents one gene)
+	# TODO: add parameters for random_measure from user options
+    return [[Measure.random_measure() for _ in range(num_measures)] for _ in range(population_count)]
+
+
+# fitness is calculated as follows:
+# sum(abs(target_measure - actual_measure) for each measure)
+# measurement_funcs is a list of functions that calculate measurements of a series of notes
+# measurement_targets is a list of the values for each measure that contribute the most fitness for that measure
+# measurement_weights is a list of weights to add influence to the values of various measures
+# if no list of weights is provided, all measures are weighted equally
+def fitness(gene, measurement_funcs=Measure.DEFAULT_MEASUREMENTS, measurement_targets=Measure.DEFAULT_TARGETS, measurement_weights=None):
+	if len(measurement_funcs) == 0 or len(measurement_targets) == 0:
+		raise ValueError("Measurement functions and measure target values must be provided.")
+	if len(measurement_funcs) != len(measurement_targets):
+		raise ValueError("The same number of measurement functions and target values must be provided.")
+	if measurement_weights is None:
+		measurement_weights = [1 for _ in range(len(measurement_funcs))]
+	if len(measurement_weights) != len(measurement_funcs):
+		raise ValueError("The same number of measurement weights and measurement functions must be provided.")
+	result = 0
+	# TODO: allow for measurements that take into account neighboring measures
+    for measure in gene:
+		for i in range(len(measurement_funcs)):
+			measure_val = measurement_funcs[i](measure)
+			result -= math.abs(measure_val - measurement_targets[i]) * measurement_weights[i]
     return result
 
 
-def fitness(gene, start_note, scale, favor_array, favor_gain):
-    direction = 1 - 2 * ((gene & 0x100) >> 8)
-    note_change_val = gene & 0xFF
-    dest_note = start_note + note_change_val * direction
-    result = 0
-    if dest_note < 0 or dest_note > 127:
-        result = 0
-    else:
-        # factors: for now simply note distance and interval type
-        # perfect intervals: +0.5
-        # major intervals: +0.4
-        # minor intervals: +0.2
-        # within octave: +1
-        # within two octaves: +0.5
-        # greater than 3 octaves: -0.75
-        # TODO: allow different scales
-        num_octaves = note_change_val // 12
-        if num_octaves < 1:
-            result += 1
-        elif num_octaves < 2:
-            result += 0.5
-        elif num_octaves > 3:
-            result -= 0.75
-        base_interval = note_change_val - num_octaves * 12
-        if not (base_interval in scale):
-            result -= 2 * favor_gain
-        else:
-            result += favor_array[scale.index(base_interval)] * favor_gain
-    return result
-
-
-def selection(population, start_note, scale, favor_array, favor_gain):
+def selection(population):
     if not population:
         return []
-    # TODO: allow different starting notes
-    fitnesses = [fitness(x, start_note, scale, favor_array, favor_gain) for x in population]
+    # TODO: allow different options for the fitness function
+    fitnesses = [fitness(x) for x in population]
     mean_fitness = sum(fitnesses) / len(fitnesses)
-    debug_print("Fitnesses:")
-    debug_print('\t{}'.format(str(fitnesses)))
-    debug_print("Mean fitness:")
-    debug_print('\t{}'.format(mean_fitness))
     selected_population = []
     for i in range(len(population)):
         proportion = fitnesses[i] // mean_fitness
@@ -70,22 +52,29 @@ def selection(population, start_note, scale, favor_array, favor_gain):
     return selected_population
 
 
-def crossover(population, percentage):
+# granularity is the power of 2 division that the crossover point will be chosen at
+def crossover(population, percentage, granularity=3):
     mates = [x for x in population if random.random() < percentage]
     result = []
     if len(mates) % 2 == 1:
         mates.append(random.choice(population))
     for i in range(0, len(mates), 2):
-        crossover_point = random.randrange(GENE_BIT_COUNT - 1)
-        min_mask = 0x1ff >> (GENE_BIT_COUNT - crossover_point)
-        max_mask = 0x1ff ^ min_mask
-        first = mates[i] & min_mask | mates[i + 1] & max_mask
-        second = mates[i + 1] & min_mask | mates[i] & max_mask
+        crossover_point = random.randint(0, 2 ** granularity)
+		crossover_point *= 1 / (2 ** granularity)
+		first = []
+		second = []
+		for measure_index in range(len(population[i])):
+			first_split = population[i][measure_index].split(crossover_point)
+			second_split = population[i + 1][measure_index].split(crossover_point)
+			first.append(first_split[0] + second_split[1])
+			second.append(first_split[1] + second_split[0])
         result.append(first)
         result.append(second)
+		# TODO: add a step that fixes the resulting measures so that they are valid
     return result
 
 
+# TODO: code below this line still needs to be refactored
 def mutate(population, percentage):
     result = []
     for x in population:
