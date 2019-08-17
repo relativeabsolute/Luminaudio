@@ -6,15 +6,12 @@
 		"mutation": 0.01,
 		"population": 30,
 		"measurement_targets": [0.0625, 0.125, 2, 0.25, 60],
-		"measurement_weights": [1, 1, 1, 1, 1]
+		"measurement_weights": [1, 1, 1, 1, 1],
+		"num_measures": 4
 	},
 	"midi": {
 		"ticks_per_quarter": 960,
-		"measures": 4,
 		"scale": [0, 2, 4, 5, 7, 9, 11],
 		"output": "output.mid"
-	},
-	"system": {
-		"debug": false
 	}
 }

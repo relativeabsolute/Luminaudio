@@ -1,9 +1,7 @@
-import requests
+#import requests
 import genetic
 import midi
 import json
-import debug
-from debug import debug_print
 import argparse
 
 
@@ -44,12 +42,11 @@ def main():
 	parser.add_argument('--config_json', help='location of json configuration', default='config.json')
 	options = vars(parser.parse_args())
 	config_json = read_config(options['config_json'])
-	debug.debug_flag = config_json['system']['debug']
 	
 	#url = 'https://api.openweathermap.org/data/2.5/weather?zip={}&appid={}'.format(options['zip'], options['owmkey'])
 	#r = requests.get(url)
 	ticks_per_quarter = config_json['midi']['ticks_per_quarter']
-	example = midi.Midi(ticks_per_quarter)
+	midi_output = midi.Midi(ticks_per_quarter)
 	trk_chk = midi.Midi.TrackChunk(ticks_per_quarter)
 	
 	
@@ -62,8 +59,8 @@ def main():
 			note_length_ticks = int(ticks_per_quarter * note.note_len * 4)
 			trk_chk.add_event(1, 0, note.midi_num, 96, 0)
 			trk_chk.add_event(0, 0, note.midi_num, 0, note_length_ticks)
-	example.chunks.append(trk_chk)
-	example.write_to_file(config_json['midi']['output'])
+	midi_output.chunks.append(trk_chk)
+	midi_output.write_to_file(config_json['midi']['output'])
 	
 
 if __name__ == "__main__":

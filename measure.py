@@ -2,7 +2,6 @@ from decimal import Decimal
 import math
 import random
 import statistics
-import bisect
 
 
 class Note:
@@ -35,7 +34,7 @@ class Measure:
 
 
 	def __str__(self):
-		return '[' + ', '.join(str(note) for note in self.notes) + ']'
+		return '[{}]'.format(', '.join(str(note) for note in self.notes))
 
 
 	def total_note_length(self):
@@ -49,6 +48,8 @@ class Measure:
 		return self.total_note_length() == 1
 
 
+	# splits the measure at the specified cutoff point and 
+	# returns a tuple containing the note lists of the two halves
 	def split(self, cutoff_point):
 		running_total = 0
 		current_index = 0
@@ -103,6 +104,7 @@ class Measure:
 		return Measure(notes=result)
 
 
+	# TODO: move measurements to separate module to allow users to specify which measurements are used
 	# these measures are defined at the class level rather than instance level
 	# to make it easier to add them to lists of measures for the fitness function
 	# calculate the percentage of the measure that are rests
@@ -135,6 +137,5 @@ class Measure:
 
 
 	# TODO: include measure for presence of patterns/motifs in the measure
-	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, midi_number_stdev, note_length_mean, midi_number_mean]
-	DEFAULT_TARGETS = [Decimal(0.0625), Decimal(0.125), Decimal(2), Decimal(0.25), Decimal(60)]
-
+	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, note_length_mean,
+		midi_number_stdev, midi_number_mean]

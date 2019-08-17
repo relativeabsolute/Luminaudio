@@ -1,4 +1,3 @@
-from debug import debug_print
 import random
 from measure import Measure
 from decimal import Decimal
@@ -18,7 +17,7 @@ def initial_population(population_count, num_measures=1):
 # measurement_targets is a list of the values for each measure that contribute the most fitness for that measure
 # measurement_weights is a list of weights to add influence to the values of various measures
 # if no list of weights is provided, all measures are weighted equally
-def fitness(gene, measurement_funcs=Measure.DEFAULT_MEASUREMENTS, measurement_targets=Measure.DEFAULT_TARGETS, measurement_weights=None):
+def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=None):
 	if len(measurement_funcs) == 0 or len(measurement_targets) == 0:
 		raise ValueError("Measurement functions and measure target values must be provided.")
 	if len(measurement_funcs) != len(measurement_targets):
@@ -39,8 +38,8 @@ def fitness(gene, measurement_funcs=Measure.DEFAULT_MEASUREMENTS, measurement_ta
 def selection(population, options):
 	if not population:
 		return []
-	# TODO: allow different options for the fitness function
-	fitnesses = [fitness(x, measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
+	fitnesses = [fitness(x, measurement_funcs=Measure.DEFAULT_MEASUREMENTS,
+		measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
 		measurement_weights=list(map(Decimal, options['genetic']['measurement_weights']))) for x in population]
 	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
 	num_selected = len(selected)
@@ -100,7 +99,7 @@ def run(options):
 	num_iterations = options['genetic']['iterations']
 	crossover_percentage = options['genetic']['crossover']
 	mutation_percentage = options['genetic']['mutation']
-	pop = initial_population(options['genetic']['population'])
+	pop = initial_population(options['genetic']['population'], options['genetic']['num_measures'])
 	for i in range(num_iterations):
 		if len(pop) == 1:
 			break

@@ -1,4 +1,3 @@
-from debug import debug_print
 import math
 
 
@@ -7,7 +6,6 @@ class Midi:
     def get_var_length_qty(value):
         byte_count = math.ceil(value.bit_length() / 7)
         result = 0
-        #print("original value = {}".format(bin(value)))
         for i in range(byte_count):
             current_value = (value & (0x7F << (i * 7))) >> (i * 7)
             result |= (current_value | ((i > 0) << 7)) << (i * 8)
