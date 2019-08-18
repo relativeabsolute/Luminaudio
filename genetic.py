@@ -1,14 +1,22 @@
 import random
 from measure import Measure
+import measurements
 from decimal import Decimal
+from operator import attrgetter, itemgetter
 import math
 
 
-def initial_population(population_count, num_measures=1):
+def initial_population(options):
+	population_count = options['genetic']['population']
+	num_measures = options['genetic']['num_measures']
+	rest_chance = options['genetic']['rest_chance']
+	min_note = options['genetic']['min_note']
+	max_note = options['genetic']['max_note']
+
 	random.seed()
 	# population is represented as a list of lists where the inner lists are each a list of measures (which represents one gene)
 	# TODO: add parameters for random_measure from user options
-	return [[Measure.random_measure() for _ in range(num_measures)] for _ in range(population_count)]
+	return [[Measure.random_measure(rest_chance, min_note, max_note) for _ in range(num_measures)] for _ in range(population_count)]
 
 
 # fitness is calculated as follows:
@@ -23,25 +31,40 @@ def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=No
 	if len(measurement_funcs) != len(measurement_targets):
 		raise ValueError("The same number of measurement functions and target values must be provided.")
 	if measurement_weights is None:
-		measurement_weights = [Decimal(1) for _ in range(len(measurement_funcs))]
+		measurement_weights = [1.0 for _ in range(len(measurement_funcs))]
 	if len(measurement_weights) != len(measurement_funcs):
 		raise ValueError("The same number of measurement weights and measurement functions must be provided.")
-	result = Decimal(0)
+	result = 0.0
 	# TODO: allow for measurements that take into account neighboring measures
 	for measure in gene:
 		for i in range(len(measurement_funcs)):
-			measure_val = Decimal(measurement_funcs[i](measure))
+			measure_val = measurements.min_max_normalize(measurement_funcs[i]['function'](measure),
+				measurement_funcs[i]['unit'])
 			result -= abs(measure_val - measurement_targets[i]) * measurement_weights[i]
 	return result
 
 
-def selection(population, options):
+# takes the given dictionary mapping categories to lists of functions
+# and constructs the dictionary of measurement functions from it
+# resulting dictionary's keys are measurement categories and values are lists of
+# dicts containing measurement functions and units to be applied in that category
+def construct_measurements(measurements_json):
+	result = { 'SingleMeasurements': [] }
+	for function_object in measurements_json['SingleMeasurements']:
+		result['SingleMeasurements'].append(
+			{ 'function': attrgetter(function_object['name'])(measurements.SingleMeasurements),
+				'unit': function_object['unit']})
+	return result
+
+
+# take the best half of the population according to the calculated fitness values
+def selection(population, measurement_functions, measurement_targets, measurement_weights):
 	if not population:
 		return []
-	fitnesses = [fitness(x, measurement_funcs=Measure.DEFAULT_MEASUREMENTS,
-		measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
-		measurement_weights=list(map(Decimal, options['genetic']['measurement_weights']))) for x in population]
-	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
+	fitnesses = [fitness(x, measurement_funcs=measurement_functions,
+		measurement_targets=measurement_targets,
+		measurement_weights=measurement_weights) for x in population]
+	selected = sorted(enumerate(fitnesses), key=itemgetter(1))
 	num_selected = len(selected)
 	result = []
 	for i in range(num_selected // 2, num_selected):
@@ -49,8 +72,10 @@ def selection(population, options):
 	return result
 
 
+# crossover is how the next generation of the population is determined
+# a sample of length population_length * percentage will be chosen and 'bred'
 # granularity is the power of 2 division that the crossover point will be chosen at
-def crossover(population, percentage, granularity=3):
+def crossover(population, percentage, granularity):
 	mates = random.sample(population, int(len(population) * percentage))
 	result = []
 	if len(mates) % 2 == 1:
@@ -88,7 +113,7 @@ def mutate(population, percentage):
 				if random.random() < percentage:
 					# for now we vary the note number since
 					# changing the note length would require the measure to be fixed
-					new_note.midi_num = math.floor(random.gauss(note.midi_num, Measure.midi_number_stdev(measure)))
+					new_note.midi_num = math.floor(random.gauss(note.midi_num, measurements.SingleMeasurements.midi_number_stdev(measure)))
 				new_notes.append(new_note)
 			new_gene.append(Measure(new_notes))
 		result.append(new_gene)
@@ -97,15 +122,25 @@ def mutate(population, percentage):
 
 def run(options):
 	num_iterations = options['genetic']['iterations']
-	crossover_percentage = options['genetic']['crossover']
+	crossover_percentage = options['genetic']['crossover_percentage']
+	crossover_granularity = options['genetic']['crossover_granularity']
 	mutation_percentage = options['genetic']['mutation']
-	pop = initial_population(options['genetic']['population'], options['genetic']['num_measures'])
+
+	measurements.UNITS['note_num']['min'] = float(options['genetic']['min_note'])
+	measurements.UNITS['note_num']['max'] = float(options['genetic']['max_note'])
+
+	pop = initial_population(options)
+
+	measurement_targets = options['genetic']['measurement_targets']
+	measurement_weights = options['genetic']['measurement_weights']
+	measurement_functions = construct_measurements(options['genetic']['measurements'])
+
 	for i in range(num_iterations):
 		if len(pop) == 1:
 			break
-		selected_pop = selection(pop, options)
+		selected_pop = selection(pop, measurement_functions['SingleMeasurements'], measurement_targets, measurement_weights)
 		next_gen = selected_pop
 		if len(selected_pop) > 1:
-			next_gen = crossover(selected_pop, crossover_percentage)
+			next_gen = crossover(selected_pop, crossover_percentage, crossover_granularity)
 		pop = mutate(next_gen, mutation_percentage)
 	return pop

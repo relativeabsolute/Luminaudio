@@ -2,16 +2,27 @@
 	"genetic": {
 		"iterations": 10,
 		"population": 100,
-		"crossover": 0.5,
+		"rest_chance": 0,
+		"min_note": 21,
+		"max_note": 108,
+		"crossover_percentage": 0.5,
+		"crossover_granularity": 3,
 		"mutation": 0.01,
-		"population": 30,
-		"measurement_targets": [0.0625, 0.125, 2, 0.25, 60],
+		"measurement_targets": [0.0625, 0.125, 0.25, 0.05, 0.6],
 		"measurement_weights": [1, 1, 1, 1, 1],
-		"num_measures": 4
+		"num_measures": 4,
+		"measurements": {
+			"SingleMeasurements": [
+				{ "name": "percent_vacant", "unit": "percent" },
+				{ "name": "note_length_stdev", "unit": "note_length" },
+				{ "name": "note_length_mean", "unit": "note_length" },
+				{ "name": "midi_number_stdev", "unit": "note_num" },
+				{ "name": "midi_number_mean", "unit": "note_num" }
+			]
+		}
 	},
 	"midi": {
 		"ticks_per_quarter": 960,
-		"scale": [0, 2, 4, 5, 7, 9, 11],
 		"output": "output.mid"
 	}
 }
