@@ -32,7 +32,8 @@ def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=No
 	# TODO: allow for measurements that take into account neighboring measures
 	for measure in gene:
 		for i in range(len(measurement_funcs)):
-			measure_val = measurement_funcs[i](measure)
+			measure_val = measurements.min_max_normalize(measurement_funcs[i]['function'](measure),
+				measurement_funcs[i]['unit'])
 			result -= abs(measure_val - measurement_targets[i]) * measurement_weights[i]
 	return result
 
@@ -40,12 +41,13 @@ def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=No
 # takes the given dictionary mapping categories to lists of functions
 # and constructs the dictionary of measurement functions from it
 # resulting dictionary's keys are measurement categories and values are lists of
-# measurement functions to be applied in that category
+# dicts containing measurement functions and units to be applied in that category
 def construct_measurements(measurements_json):
 	result = { 'SingleMeasurements': [] }
 	for function_object in measurements_json['SingleMeasurements']:
 		result['SingleMeasurements'].append(
-			attrgetter(function_object['name'])(measurements.SingleMeasurements))
+			{ 'function': attrgetter(function_object['name'])(measurements.SingleMeasurements),
+				'unit': function_object['unit']})
 	return result
 
 
