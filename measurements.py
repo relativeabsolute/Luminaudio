@@ -38,7 +38,9 @@ class SingleMeasurements:
 
 UNITS = {
 	'note_length': { 'min': 0.0, 'max': 1.0 },
-	'note_num': { 'min': float(Note.MIN_MIDI_NOTE), 'max': float(Note.MAX_MIDI_NOTE) },
+	# the values for note_num are just placeholders
+	# since they get changed by the user config anyway
+	'note_num': { 'min': 0, 'max': 128 }, 
 	'percent': { 'min': 0.0, 'max': 1.0 }
 }
 
@@ -48,7 +50,3 @@ def min_max_normalize(value, unit):
 	max_value = UNITS[unit]['max']
 	return (value - min_value) / (max_value - min_value)
 
-
-DEFAULT_MEASUREMENTS = [SingleMeasurements.percent_vacant,
-	SingleMeasurements.note_length_stdev, SingleMeasurements.note_length_mean,
-	SingleMeasurements.midi_number_stdev, SingleMeasurements.midi_number_mean]

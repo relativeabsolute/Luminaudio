@@ -4,8 +4,6 @@ import random
 
 
 class Note:
-	MIN_MIDI_NOTE = 21
-	MAX_MIDI_NOTE = 108
 	decimal_two = Decimal(2)
 
 
@@ -86,7 +84,7 @@ class Measure:
 
 
 	# most basic possible random measure generation
-	def random_measure(rests_chance=0, min_note=Note.MIN_MIDI_NOTE, max_note=Note.MAX_MIDI_NOTE):
+	def random_measure(rests_chance, min_note, max_note):
 		length_left = Decimal(1)
 		max_power = 0
 		min_power = -4 # go down to sixteenth notes for now

@@ -6,11 +6,17 @@ from operator import attrgetter, itemgetter
 import math
 
 
-def initial_population(population_count, num_measures=1):
+def initial_population(options):
+	population_count = options['genetic']['population']
+	num_measures = options['genetic']['num_measures']
+	rest_chance = options['genetic']['rest_chance']
+	min_note = options['genetic']['min_note']
+	max_note = options['genetic']['max_note']
+
 	random.seed()
 	# population is represented as a list of lists where the inner lists are each a list of measures (which represents one gene)
 	# TODO: add parameters for random_measure from user options
-	return [[Measure.random_measure() for _ in range(num_measures)] for _ in range(population_count)]
+	return [[Measure.random_measure(rest_chance, min_note, max_note) for _ in range(num_measures)] for _ in range(population_count)]
 
 
 # fitness is calculated as follows:
@@ -51,6 +57,7 @@ def construct_measurements(measurements_json):
 	return result
 
 
+# take the best half of the population according to the calculated fitness values
 def selection(population, measurement_functions, measurement_targets, measurement_weights):
 	if not population:
 		return []
@@ -65,8 +72,10 @@ def selection(population, measurement_functions, measurement_targets, measuremen
 	return result
 
 
+# crossover is how the next generation of the population is determined
+# a sample of length population_length * percentage will be chosen and 'bred'
 # granularity is the power of 2 division that the crossover point will be chosen at
-def crossover(population, percentage, granularity=3):
+def crossover(population, percentage, granularity):
 	mates = random.sample(population, int(len(population) * percentage))
 	result = []
 	if len(mates) % 2 == 1:
@@ -113,9 +122,14 @@ def mutate(population, percentage):
 
 def run(options):
 	num_iterations = options['genetic']['iterations']
-	crossover_percentage = options['genetic']['crossover']
+	crossover_percentage = options['genetic']['crossover_percentage']
+	crossover_granularity = options['genetic']['crossover_granularity']
 	mutation_percentage = options['genetic']['mutation']
-	pop = initial_population(options['genetic']['population'], options['genetic']['num_measures'])
+
+	measurements.UNITS['note_num']['min'] = float(options['genetic']['min_note'])
+	measurements.UNITS['note_num']['max'] = float(options['genetic']['max_note'])
+
+	pop = initial_population(options)
 
 	measurement_targets = options['genetic']['measurement_targets']
 	measurement_weights = options['genetic']['measurement_weights']
@@ -127,6 +141,6 @@ def run(options):
 		selected_pop = selection(pop, measurement_functions['SingleMeasurements'], measurement_targets, measurement_weights)
 		next_gen = selected_pop
 		if len(selected_pop) > 1:
-			next_gen = crossover(selected_pop, crossover_percentage)
+			next_gen = crossover(selected_pop, crossover_percentage, crossover_granularity)
 		pop = mutate(next_gen, mutation_percentage)
 	return pop
