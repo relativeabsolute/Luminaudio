@@ -7,7 +7,16 @@
 		"population": 30,
 		"measurement_targets": [0.0625, 0.125, 2, 0.25, 60],
 		"measurement_weights": [1, 1, 1, 1, 1],
-		"num_measures": 4
+		"num_measures": 4,
+		"measurements": {
+			"SingleMeasurements": [
+				{ "name": "percent_vacant" },
+				{ "name": "note_length_stdev" },
+				{ "name": "note_length_mean" },
+				{ "name": "midi_number_stdev" },
+				{ "name": "midi_number_mean" }
+			]
+		}
 	},
 	"midi": {
 		"ticks_per_quarter": 960,

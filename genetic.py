@@ -2,6 +2,7 @@ import random
 from measure import Measure
 import measurements
 from decimal import Decimal
+from operator import attrgetter, itemgetter
 import math
 
 
@@ -24,25 +25,37 @@ def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=No
 	if len(measurement_funcs) != len(measurement_targets):
 		raise ValueError("The same number of measurement functions and target values must be provided.")
 	if measurement_weights is None:
-		measurement_weights = [Decimal(1) for _ in range(len(measurement_funcs))]
+		measurement_weights = [1.0 for _ in range(len(measurement_funcs))]
 	if len(measurement_weights) != len(measurement_funcs):
 		raise ValueError("The same number of measurement weights and measurement functions must be provided.")
-	result = Decimal(0)
+	result = 0.0
 	# TODO: allow for measurements that take into account neighboring measures
 	for measure in gene:
 		for i in range(len(measurement_funcs)):
-			measure_val = Decimal(measurement_funcs[i](measure))
+			measure_val = measurement_funcs[i](measure)
 			result -= abs(measure_val - measurement_targets[i]) * measurement_weights[i]
 	return result
 
 
-def selection(population, options):
+# takes the given dictionary mapping categories to lists of functions
+# and constructs the dictionary of measurement functions from it
+# resulting dictionary's keys are measurement categories and values are lists of
+# measurement functions to be applied in that category
+def construct_measurements(measurements_json):
+	result = { 'SingleMeasurements': [] }
+	for function_object in measurements_json['SingleMeasurements']:
+		result['SingleMeasurements'].append(
+			attrgetter(function_object['name'])(measurements.SingleMeasurements))
+	return result
+
+
+def selection(population, measurement_functions, measurement_targets, measurement_weights):
 	if not population:
 		return []
-	fitnesses = [fitness(x, measurement_funcs=measurements.DEFAULT_MEASUREMENTS,
-		measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
-		measurement_weights=list(map(Decimal, options['genetic']['measurement_weights']))) for x in population]
-	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
+	fitnesses = [fitness(x, measurement_funcs=measurement_functions,
+		measurement_targets=measurement_targets,
+		measurement_weights=measurement_weights) for x in population]
+	selected = sorted(enumerate(fitnesses), key=itemgetter(1))
 	num_selected = len(selected)
 	result = []
 	for i in range(num_selected // 2, num_selected):
@@ -101,10 +114,15 @@ def run(options):
 	crossover_percentage = options['genetic']['crossover']
 	mutation_percentage = options['genetic']['mutation']
 	pop = initial_population(options['genetic']['population'], options['genetic']['num_measures'])
+
+	measurement_targets = options['genetic']['measurement_targets']
+	measurement_weights = options['genetic']['measurement_weights']
+	measurement_functions = construct_measurements(options['genetic']['measurements'])
+
 	for i in range(num_iterations):
 		if len(pop) == 1:
 			break
-		selected_pop = selection(pop, options)
+		selected_pop = selection(pop, measurement_functions['SingleMeasurements'], measurement_targets, measurement_weights)
 		next_gen = selected_pop
 		if len(selected_pop) > 1:
 			next_gen = crossover(selected_pop, crossover_percentage)
