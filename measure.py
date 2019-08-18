@@ -1,7 +1,6 @@
 from decimal import Decimal
 import math
 import random
-import statistics
 
 
 class Note:
@@ -20,7 +19,7 @@ class Note:
 	# returns true if the note is a multiple of a nonpositive power of two
 	def is_valid_length(self):
 		numer, denom = map(Decimal, self.note_len.as_integer_ratio())
-		log = denom.log10() / Note.decimal_two.log10()
+		log = denom.log10() / self.decimal_two.log10()
 		return math.ceil(log) == math.floor(log) and numer <= denom
 
 
@@ -104,38 +103,3 @@ class Measure:
 		return Measure(notes=result)
 
 
-	# TODO: move measurements to separate module to allow users to specify which measurements are used
-	# these measures are defined at the class level rather than instance level
-	# to make it easier to add them to lists of measures for the fitness function
-	# calculate the percentage of the measure that are rests
-	def percent_vacant(measure):
-		return sum(map(lambda note: note.note_len, filter(lambda note: note.is_rest, measure.notes)))
-
-
-	def note_length_stdev(measure):
-		if len(measure.notes) <= 1:
-			return 0
-		return statistics.stdev(map(lambda note: note.note_len, measure.notes))
-
-
-	def note_length_mean(measure):
-		if len(measure.notes) < 1:
-			return 0
-		return statistics.mean(map(lambda note: note.note_len, measure.notes))
-
-
-	def midi_number_stdev(measure):
-		if len(measure.notes) <= 1:
-			return 0
-		return statistics.stdev(map(lambda note: note.midi_num, measure.notes))
-
-	
-	def midi_number_mean(measure):
-		if len(measure.notes) < 1:
-			return 0
-		return statistics.mean(map(lambda note: note.midi_num, measure.notes))
-
-
-	# TODO: include measure for presence of patterns/motifs in the measure
-	DEFAULT_MEASUREMENTS = [percent_vacant, note_length_stdev, note_length_mean,
-		midi_number_stdev, midi_number_mean]

@@ -1,5 +1,6 @@
 import random
 from measure import Measure
+import measurements
 from decimal import Decimal
 import math
 
@@ -38,7 +39,7 @@ def fitness(gene, measurement_funcs, measurement_targets, measurement_weights=No
 def selection(population, options):
 	if not population:
 		return []
-	fitnesses = [fitness(x, measurement_funcs=Measure.DEFAULT_MEASUREMENTS,
+	fitnesses = [fitness(x, measurement_funcs=measurements.DEFAULT_MEASUREMENTS,
 		measurement_targets=list(map(Decimal, options['genetic']['measurement_targets'])),
 		measurement_weights=list(map(Decimal, options['genetic']['measurement_weights']))) for x in population]
 	selected = sorted(enumerate(fitnesses), key=lambda x: x[1])
@@ -88,7 +89,7 @@ def mutate(population, percentage):
 				if random.random() < percentage:
 					# for now we vary the note number since
 					# changing the note length would require the measure to be fixed
-					new_note.midi_num = math.floor(random.gauss(note.midi_num, Measure.midi_number_stdev(measure)))
+					new_note.midi_num = math.floor(random.gauss(note.midi_num, measurements.SingleMeasurements.midi_number_stdev(measure)))
 				new_notes.append(new_note)
 			new_gene.append(Measure(new_notes))
 		result.append(new_gene)
