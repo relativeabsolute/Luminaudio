@@ -18,11 +18,15 @@ class Midi:
 
 
 	class HeaderChunk:
-		# default to 960 ticks per quarter note
-		def __init__(self, ticks_per_quarter = 960):
-			self.chunk_type = 'MThd'
-			self.length = 6
-			self.format = 0 # single multi-channel track for now
+		CHUNK_TYPE = 'MThd'		
+		HEADER_LENGTH = 6
+		FILE_FORMAT = 0 # single multi-channel track for now
+
+
+		def __init__(self, ticks_per_quarter):
+			self.chunk_type = self.CHUNK_TYPE
+			self.length = self.HEADER_LENGTH
+			self.format = self.FILE_FORMAT 
 			self.ntrks = 1 # always 1 for a format 0 file
 			self.division = ticks_per_quarter
 
@@ -36,6 +40,9 @@ class Midi:
 
 
 	class TrackChunk:
+		CHUNK_TYPE = 'MTrk'
+
+
 		class Event:
 			# blank values to initialize
 			def __init__(self):
@@ -45,7 +52,7 @@ class Midi:
 
 		def __init__(self, ticks_per_qtr_note):
 			self.ticks_per_qtr_note = ticks_per_qtr_note
-			self.chunk_type = 'MTrk'
+			self.chunk_type = self.CHUNK_TYPE
 			self.length = 0
 			self.events = []
 
@@ -93,7 +100,7 @@ class Midi:
 			file_obj.write(bytes([0x00, 0xFF, 0x2F, 0x00]))
 
 
-	def __init__(self, ticks_per_quarter = 960):
+	def __init__(self, ticks_per_quarter):
 		self.chunks = [self.HeaderChunk(ticks_per_quarter)]
 
 
