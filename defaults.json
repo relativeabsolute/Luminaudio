@@ -1,10 +1,15 @@
 {
+	"randomness_source": {
+		"type": "from_json",
+		"parameters": {
+			"rest_chance": 0,
+			"min_note": 21,
+			"max_note": 108
+		}
+	},
 	"genetic": {
 		"iterations": 10,
 		"population": 100,
-		"rest_chance": 0,
-		"min_note": 21,
-		"max_note": 108,
 		"crossover_percentage": 0.5,
 		"crossover_granularity": 3,
 		"mutation": 0.01,

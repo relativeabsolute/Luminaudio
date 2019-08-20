@@ -1,22 +1,10 @@
 import random
 from measure import Measure
 import measurements
+import initpopulation
 from decimal import Decimal
 from operator import attrgetter, itemgetter
 import math
-
-
-def initial_population(options):
-	population_count = options['genetic']['population']
-	num_measures = options['genetic']['num_measures']
-	rest_chance = options['genetic']['rest_chance']
-	min_note = options['genetic']['min_note']
-	max_note = options['genetic']['max_note']
-
-	random.seed()
-	# population is represented as a list of lists where the inner lists are each a list of measures (which represents one gene)
-	# TODO: add parameters for random_measure from user options
-	return [[Measure.random_measure(rest_chance, min_note, max_note) for _ in range(num_measures)] for _ in range(population_count)]
 
 
 # fitness is calculated as follows:
@@ -126,10 +114,8 @@ def run(options):
 	crossover_granularity = options['genetic']['crossover_granularity']
 	mutation_percentage = options['genetic']['mutation']
 
-	measurements.UNITS['note_num']['min'] = float(options['genetic']['min_note'])
-	measurements.UNITS['note_num']['max'] = float(options['genetic']['max_note'])
-
-	pop = initial_population(options)
+	init_pop = attrgetter(options['randomness_source']['type'])(initpopulation)
+	pop = init_pop(options)
 
 	measurement_targets = options['genetic']['measurement_targets']
 	measurement_weights = options['genetic']['measurement_weights']
