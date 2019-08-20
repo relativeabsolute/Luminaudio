@@ -2,6 +2,7 @@ from measure import Measure
 import random
 import requests
 import measurements
+import statistics
 
 # population generators must generate a population of measures based on
 # the given parameters
@@ -34,11 +35,27 @@ def from_owm(options):
 
 	url = 'https://api.openweathermap.org/data/2.5/forecast'
 	payload = { 'zip': parameters['zip'], 'appid': parameters['client_key'],
-		'units': 'metric' }
+		'units': 'imperial' } # using imperial because fahrenheit is easier to map to notes
 	resp = requests.get(url, params=payload)
 	resp.raise_for_status()
 
-	# TODO: fill in parameters based on weather forecast data
-	return [[Measure.random_measure(rest_chance, min_note, max_note) for _ in range(num_measures)] for _ in range(population_count)]
+	resp_json = resp.json()
+	min_temp = min(map(lambda item: item['main']['temp'], resp_json['list']))
+	max_temp = max(map(lambda item: item['main']['temp'], resp_json['list']))
+
+	temp_range = max_temp - min_temp
+	
+	min_note = int(min_temp * (60 / temp_range)) - 60
+	max_note = int(max_temp * (60 / temp_range)) - 60
+
+	print("min_temp: {}".format(min_temp))
+	print("max_temp: {}".format(max_temp))
+	print("min_note: {}".format(min_note))
+	print("max_note: {}".format(max_note))
+
+	measurements.UNITS['note_num']['min'] = float(min_note)
+	measurements.UNITS['note_num']['max'] = float(max_note)
+
+	return [[Measure.random_measure(0, min_note, max_note) for _ in range(num_measures)] for _ in range(population_count)]
 
 
